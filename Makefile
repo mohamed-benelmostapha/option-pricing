@@ -3,6 +3,8 @@ TARGET_EXEC := fair_price_calculator
 
 BUILD_DIR := ./build
 SRC_DIRS := ./src
+TEST_DIR := ./test
+INC_DIRS := ./include
 
 # Find all the C and C++ files we want to compile
 # Note the single quotes around the * expressions. The shell will incorrectly expand these otherwise, but we want to send the * directly to the find command.
@@ -16,8 +18,6 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 # As an example, ./build/hello.cpp.o turns into ./build/hello.cpp.d
 DEPS := $(OBJS:.o=.d)
 
-# Every folder in ./src will need to be passed to GCC so that it can find header files
-INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
@@ -39,10 +39,13 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
+test_%: $(OBJS) $(BUILD_DIR)/$(TEST_DIR)/test_%.c.o
+	$(CXX) $^ -o $@ $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -r $(BUILD_DIR)
+	-rm -r $(BUILD_DIR)
+	-rm test_*
 
 # Include the .d makefiles. The - at the front suppresses the errors of missing
 # Makefiles. Initially, all the .d files will be missing, and we don't want those
